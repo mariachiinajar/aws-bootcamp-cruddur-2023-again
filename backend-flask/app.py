@@ -27,6 +27,13 @@ from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProces
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 
+# ROLLBAR -----------------
+from time import strftime
+import os
+import rollbar
+import rollbar.contrib.flask
+from flask import got_request_exception
+
 # CLOUDWATCH LOGS -----------------
 import watchtower
 import logging
@@ -60,13 +67,14 @@ xray_url = os.getenv("AWS_XRAY_URL")
 xray_recorder.configure(service='Cruddur', dynamic_naming=xray_url)
 XRayMiddleware(app, xray_recorder)
 
-# HoneyComb
+# HONEYCOMB -----------------------
 # Initialise automatic instrumentation with Flask
 FlaskInstrumentor().instrument_app(app)
 RequestsInstrumentor().instrument()
 
 frontend = os.getenv('FRONTEND_URL')
 backend = os.getenv('BACKEND_URL')
+rollbar_access_token = os.getenv('ROLLBAR_ACCESS_TOKEN')
 origins = [frontend, backend]
 cors = CORS(
   app, 
@@ -76,12 +84,38 @@ cors = CORS(
   methods="OPTIONS,GET,HEAD,POST"
 )
 
-## CLOUDWATH -----
+# ROLLBAR -------------------------
+# @app.before_first_request # this decorator will break the code as it is depricated after Flask 2.2 
+with app.app_context():     # use this 'with' statement instead. 
+  def init_rollbar():
+      """init rollbar module"""
+      rollbar.init(
+          # access token
+          rollbar_access_token,
+          # environment name
+          'production',
+          # server root directory, makes tracebacks prettier
+          root=os.path.dirname(os.path.realpath(__file__)),
+          # flask already sets up logging
+          allow_logging_basic_config=False)
+
+      # send exceptions from `app` to rollbar, using flask's signal system.
+      got_request_exception.connect(rollbar.contrib.flask.report_exception, app)
+
+# ROLLBAR TEST---------------------
+@app.route('/rollbar/test')
+def rollbar_test():
+    rollbar.report_message('Hello Rollbar!', 'warning')
+    return "Hello, World!"
+
+
+## CLOUDWATH ----------------------
 @app.after_request
 def after_request(response):
   timestamp = strftime('[%Y-%b-%d %H:%M]')
   LOGGER.error("%s %s %s %s %s %s", timestamp, request.remote_addr, request.method, request.scheme, request.full_path, response.status)
   return response
+
 
 @app.route("/api/message_groups", methods=['GET'])
 def data_message_groups():
