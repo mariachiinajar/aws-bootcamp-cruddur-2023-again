@@ -54,8 +54,8 @@ provider = TracerProvider()
 processor = BatchSpanProcessor(OTLPSpanExporter()) 
 provider.add_span_processor(processor)
 
-simple_processor = SimpleSpanProcessor(ConsoleSpanExporter())
-provider.add_span_processor(simple_processor)
+# simple_processor = SimpleSpanProcessor(ConsoleSpanExporter())
+# provider.add_span_processor(simple_processor)
 
 trace.set_tracer_provider(provider)
 tracer = trace.get_tracer(__name__)
@@ -91,9 +91,9 @@ with app.app_context():     # use this 'with' statement instead.
       """init rollbar module"""
       rollbar.init(
           # access token
-          rollbar_access_token,
+          access_token=rollbar_access_token,
           # environment name
-          'production',
+          environment='production',
           # server root directory, makes tracebacks prettier
           root=os.path.dirname(os.path.realpath(__file__)),
           # flask already sets up logging
@@ -106,7 +106,7 @@ with app.app_context():     # use this 'with' statement instead.
 @app.route('/rollbar/test')
 def rollbar_test():
     rollbar.report_message('Hello Rollbar!', 'warning')
-    return "Hello, World!"
+    return "Hello, Rollbar!"
 
 
 ## CLOUDWATH ----------------------
