@@ -54,8 +54,8 @@ provider = TracerProvider()
 processor = BatchSpanProcessor(OTLPSpanExporter()) 
 provider.add_span_processor(processor)
 
-# simple_processor = SimpleSpanProcessor(ConsoleSpanExporter())
-# provider.add_span_processor(simple_processor)
+simple_processor = SimpleSpanProcessor(ConsoleSpanExporter())
+provider.add_span_processor(simple_processor)
 
 trace.set_tracer_provider(provider)
 tracer = trace.get_tracer(__name__)
@@ -167,6 +167,7 @@ def data_notifications():
   return data, 200
 
 @app.route("/api/activities/@<string:handle>", methods=['GET'])
+@xray_recorder.capture("user_activities")
 def data_handle(handle):
   model = UserActivities.run(handle)
   if model['errors'] is not None:
