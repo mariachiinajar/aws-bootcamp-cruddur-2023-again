@@ -1,0 +1,15 @@
+#! /usr/bin/bash
+# This script opens an interactive shell for a running container when used with a container name.
+# Example command to use this script: 
+# ./shell frontend 
+# This will open an interactive shell of the running frontend container. 
+
+if [ $# -ne 1 ]
+then
+    echo "Container name: $($1)"
+    exit 1
+fi
+
+container_name="$1"
+CONTAINER_NAME=$(docker container ls --all --quiet --filter "name=$container_name")
+docker exec -it $CONTAINER_NAME bash 
