@@ -18,6 +18,9 @@ tasks:
     command: |
       cd frontend-react-js
       npm i
+  - name: debug
+    command: |
+      cd debug
 vscode:
   extensions:
     - 42Crunch.vscode-openapi
