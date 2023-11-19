@@ -33,7 +33,7 @@ export default function HomeFeedPage() {
       console.log(err);
     }
   };
-
+  
   const checkAuth = async () => {
     Auth.currentAuthenticatedUser({
       bypassCache: false
