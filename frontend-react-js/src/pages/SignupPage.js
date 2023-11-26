@@ -3,8 +3,7 @@ import React from "react";
 import {ReactComponent as Logo} from '../components/svg/logo.svg';
 import { Link } from "react-router-dom";
 
-// [TODO] Authenication
-import Cookies from 'js-cookie'
+import { Auth } from 'aws-amplify';
 
 export default function SignupPage() {
 
@@ -16,16 +15,29 @@ export default function SignupPage() {
   const [errors, setErrors] = React.useState('');
 
   const onsubmit = async (event) => {
-    event.preventDefault();
-    console.log('SignupPage.onsubmit')
-    // [TODO] Authenication
-    Cookies.set('user.name', name)
-    Cookies.set('user.username', username)
-    Cookies.set('user.email', email)
-    Cookies.set('user.password', password)
-    Cookies.set('user.confirmation_code',1234)
-    window.location.href = `/confirm?email=${email}`
-    return false
+      event.preventDefault();
+      setErrors('')
+      try {
+        const { user } = await Auth.signUp({
+          username: email,
+          password: password,
+          attributes: {
+              name: name,
+              email: email,
+              preferred_username: username,
+          },
+          autoSignIn: { // optional - enables auto sign in after user is confirmed
+              enabled: true,
+          }
+        });
+        console.log(user);
+        window.location.href = `/confirm?email=${email}`
+      } catch (error) {
+          console.log(error);
+          setErrors(error.message)
+      }
+      return false
+    }
   }
 
   const name_onchange = (event) => {
@@ -39,11 +51,6 @@ export default function SignupPage() {
   }
   const password_onchange = (event) => {
     setPassword(event.target.value);
-  }
-
-  let el_errors;
-  if (errors){
-    el_errors = <div className='errors'>{errors}</div>;
   }
 
   return (
@@ -108,4 +115,3 @@ export default function SignupPage() {
       </div>
     </article>
   );
-}
